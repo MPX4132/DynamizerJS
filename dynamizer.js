@@ -2,9 +2,10 @@
 dynamize([ interval [, setter ]]) : return
 	- interval: A number denoting the time between updates
 	- setter: A function called when setting a cell's value
-		> setter([ identifier [, content ]]) : Returns a cell's content
+		> setter([ identifier [, content [, default ]]]) : Returns a cell's content
 			- identifier: A string with the column's label.
 			- content: An object with the row's values.
+			- default: The default value to be assigned if nothing's returned.
 			
 dynamize([ stop ])
 	- stop: A boolean denoting whether or not to stop updating.
@@ -34,9 +35,10 @@ jQuery.fn.dynamize = function() {
 			$.each(contents, function(i, content) {			
 				var $row = $($this.find("template").html());
 				$.each(identifiers, function(i, identifier) {
-					var $cell = $row.children().eq(i);
-					var value = content[identifier] || "[N/A]"
-					$cell.text(processor && processor(identifier, content) || value);
+					var $cell = $($row.children()[i] || "<td>"); // Get template cell or make one
+					var value = content[identifier] || "[N/A]";
+					$cell.text(processor && processor(identifier, content, value) || value);
+					if (!$row.children()[i]) $row.append($cell);
 				});
 				$body.prepend($row);
 			});
@@ -55,7 +57,7 @@ jQuery.fn.dynamize = function() {
 }
 
 $(function() {
-	$("table.dynamic-schedule").dynamize(function(identifier, content) {
+	$("table.dynamic-schedule").dynamize(1000, function(identifier, content) {
 		if (identifier == "Date") return content["Time"];
 	});
 })
