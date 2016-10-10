@@ -13,51 +13,59 @@ dynamize([ stop ])
 jQuery.fn.dynamize = function() {
 	var interval  = typeof arguments[0] == "number"? 	arguments[0] : 1000 * 60;
 	var processor = typeof arguments[0] == "function"? 	arguments[0] : arguments[1];
-	var $this = $(this);
+					
+	var $root = $(this);
+	var $container = $($root.find("[data-body]")[0] || $root.find("tbody")[0] || this);
+	var $elementTemplate = $container.find("template");
 	
-	if ($this.data("updaterID") != undefined) clearInterval($this.data("updaterID"));
-	if (arguments[0] == false || !$this.attr("data-url")) return;
+	if ($root.data("updaterID")) clearInterval($root.data("updaterID"));
+	if (arguments[0] == false || !$root.attr("data-url") || !$elementTemplate) return;
+	
+	function configure($element) {
+		if ($root.is("table")) $root.find("thead>tr>th").each(function(i, field) {			
+			var $cell = $($element.children()[i] || "<td>"); // Get template cell or make one
+			$cell.attr("data-field", $(field).text());
+			if (!$element.children()[i]) $element.append($cell);
+		});
+		
+		return $element;
+	}
 	
 	function update() {
-		var url = $this.attr("data-url");
-		
-		$.getJSON(url, function(contents) {
-			var $head = $this.find("thead");
-			var $body = $this.find("tbody");
-			var identifiers = new Array();
-			
-			$head.find("tr>th").each(function(i, cell) {
-				identifiers.push($(cell).text());
-			});
-			
-			$body.find("tr").remove(); // Clear old rows
-			
-			$.each(contents, function(i, content) {			
-				var $row = $($this.find("template").html());
-				$.each(identifiers, function(i, identifier) {
-					var $cell = $($row.children()[i] || "<td>"); // Get template cell or make one
-					var value = content[identifier] || "[N/A]";
-					$cell.text(processor && processor(identifier, content, value) || value);
-					if (!$row.children()[i]) $row.append($cell);
+		$.getJSON($root.attr("data-url"), function(contents) {
+			$container.children().remove(); // Clear children
+
+			$.each(contents, function(i, content) {
+				var $element = configure($($elementTemplate.html()));
+				
+				$element.find("[data-field]").each(function(i, unit) {
+					var field = $(unit).attr("data-field");
+					var value = content[field] || "[N/A]";
+					if (!processor || processor(field, value, content, unit, $element)) {
+						$(unit).text(value);
+					}
 				});
-				$body.prepend($row);
-			});
-			
-			
+				
+				$container.prepend($element);
+			});			
 		}).fail(function(event) {
-			if (!url) clearInterval($this.data("upaterID"));
+			if (!url) clearInterval($root.data("upaterID"));
 			console.log("Failed to fetch!")
 		});
 	}
 	
 	update(); // Launch it once, and schedule it.
-	$this.data("updaterID", setInterval(update, interval));
+	$root.data("updaterID", setInterval(update, interval));
 	
 	return $(this);
 }
 
 $(function() {
-	$("table.dynamic-schedule").dynamize(1000, function(identifier, content) {
-		if (identifier == "Date") return content["Time"];
+	$("table.dynamic-schedule").dynamize(1000, function(field, value, content, unit, $element) {
+		if (field == "Date") {
+			$(unit).text(content["Time"]);
+			return false;
+		}
+		return true;
 	});
 })
