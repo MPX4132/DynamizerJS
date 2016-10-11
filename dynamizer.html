@@ -23,6 +23,7 @@
 		
 	</head>
 	<body>
+		<!-- Dynamic Table -->
 		<table class="dynamic-schedule table table-responsive table-striped" data-url="dynamizer.php?r=schedule">
 			<thead>
 				<tr><th>Program</th><th>Time</th><th>Date</th></tr>
@@ -33,5 +34,17 @@
 				</template>
 			</tbody>
 		</table>
+		<!-- Dynamic Generic Element -->
+		<div class="dynamic-gallery container-fluid" data-url="dynamizer.php?r=gallery">
+			<div class="row">
+				<template>
+ 					<div class="col-md-2" data-body>
+						<h3 data-field="title"></h3>
+						<img data-field="image">
+						<p data-field="comment"></p>
+					</div>
+				</template>
+			</div>
+		</div>
 	</body>
 </html>

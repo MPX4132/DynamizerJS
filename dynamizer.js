@@ -52,7 +52,7 @@ jQuery.fn.dynamize = function() {
 					}
 				});
 				
-				$container.prepend($element);
+				$container.append($element);
 			});			
 		}).fail(function(event) {
 			if (!url) clearInterval($root.data("upaterID"));
@@ -68,10 +68,16 @@ jQuery.fn.dynamize = function() {
 
 $(function() {
 	$("table.dynamic-schedule").dynamize(1000, function(field, value, content, $unit, $element) {
-		if (field == "Date") {
-			$unit.text(content["Time"]);
-			return false;
-		}
-		return true;
+		if (field == "Date") return true;
+		
+		$unit.text(content["Time"]);
+		return false;
+	});
+	
+	$("div.dynamic-gallery").dynamize(10000, function(field, value, content, $unit, $element) {
+		if (field != "image") return true;
+		
+		$unit.attr("src", content["url"]);
+		return false;
 	});
 })
