@@ -2,13 +2,19 @@
 dynamize([ interval [, setter ]]) : return
 	- interval: A number denoting the time between updates
 	- setter: A function called when setting a cell's value
-		> setter([ identifier [, content [, default ]]]) : Returns a cell's content
-			- identifier: A string with the column's label.
-			- content: An object with the row's values.
-			- default: The default value to be assigned if nothing's returned.
+		> setter([ field [, value [, content [, $unit [, $element ]]]]]) : Accepts or rejects 'value'
+			- field: A string denoting the label of a $unit.
+				> These are assignable labels which are used to target specific $units of an $element.
+			- value: The default value to be assigned if the function (setter) returns true.
+			- content: Updated JSON data for the $element passed, retrived from the server.
+			- $unit: jQuery object representing a specific part of the element being modified.
+				> These are identified by assigning the data-field tag, which can be anything.
+				> The value should match the key from a key-value pair of content (JSON from server).
+			- $element: jQuery object parent of the $unit elements which are updated.
+
 			
 dynamize([ stop ])
-	- stop: A boolean denoting whether or not to stop updating.
+	- stop: A value of 'false' to stop updating, does not accept 'true'.
 */
 jQuery.fn.dynamize = function() {
 	var interval  = typeof arguments[0] == "number"? 	arguments[0] : 1000 * 60;
@@ -41,7 +47,7 @@ jQuery.fn.dynamize = function() {
 				$element.find("[data-field]").each(function(i, unit) {
 					var field = $(unit).attr("data-field");
 					var value = content[field] || "[N/A]";
-					if (!processor || processor(field, value, content, unit, $element)) {
+					if (!processor || processor(field, value, content, $(unit), $element)) {
 						$(unit).text(value);
 					}
 				});
@@ -61,9 +67,9 @@ jQuery.fn.dynamize = function() {
 }
 
 $(function() {
-	$("table.dynamic-schedule").dynamize(1000, function(field, value, content, unit, $element) {
+	$("table.dynamic-schedule").dynamize(1000, function(field, value, content, $unit, $element) {
 		if (field == "Date") {
-			$(unit).text(content["Time"]);
+			$unit.text(content["Time"]);
 			return false;
 		}
 		return true;
