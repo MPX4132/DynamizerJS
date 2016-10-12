@@ -57,8 +57,8 @@ jQuery.fn.dynamize = function() {
 			$container.children(":gt(" + contents.length + ")").remove();
 			
 		}).fail(function(event) {
-			if (!url) clearInterval($root.data("upaterID"));
-			console.log("Failed to fetch!")
+			if (!$root.attr("data-url")) clearInterval($root.data("upaterID"));
+			console.log("Failed to fetch! Check your server or the URL!");
 		});
 	}
 	
