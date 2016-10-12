@@ -18,7 +18,8 @@ dynamize([ stop ])
 */
 jQuery.fn.dynamize = function() {
 	var interval  	=(typeof arguments[0] == "number"? 		arguments[0] : 60) * 1000;
-	var processor 	= typeof arguments[1] == "function"? 	arguments[1] : arguments[0];
+	var processor 	= typeof arguments[1] == "function"? 	arguments[1] : 
+					  typeof arguments[0] == "function"? 	arguments[0] : false;
 					
 	var $root = $(this);
 	var $container = $($root.find("[data-body]")[0] || $root.find("tbody")[0] || this);
