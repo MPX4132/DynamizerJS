@@ -1,6 +1,6 @@
 <?php
 	if ($_GET["r"] == "schedule") {
-		echo "[{\"Program\" : \"Sample 1\", \"Time\" : \"" . time() . "\"}]";
+		echo "[{\"Program\" : \"Sample 1\", \"Time\" : \"" . microtime() . "\"}]";
 		exit(0);
 	}
 	
