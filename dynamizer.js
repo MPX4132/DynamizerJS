@@ -17,8 +17,8 @@ dynamize([ stop ])
 	- stop: A value of 'false' to stop updating, does not accept 'true'.
 */
 jQuery.fn.dynamize = function() {
-	var interval  	=(typeof arguments[0] == "number"? 		arguments[0] : 60) * 1000;
-	var processor 	= typeof arguments[1] == "function"? 	arguments[1] : 
+	var interval	=(typeof arguments[0] == "number"? 		arguments[0] : 60) * 1000;
+	var setter 		= typeof arguments[1] == "function"? 	arguments[1] : 
 					  typeof arguments[0] == "function"? 	arguments[0] : false;
 					
 	var $root = $(this);
@@ -28,27 +28,51 @@ jQuery.fn.dynamize = function() {
 	if ($root.data("updaterID")) clearInterval($root.data("updaterID"));
 	if (arguments[0] == false || !$root.attr("data-url") || !$elementTemplate) return;
 	
-	function configure(element) {
-		if ($root.is("table")) $root.find("thead>tr>th").each(function(i, field) {			
-			var $cell = $($(element).children()[i] || "<td>"); // Get template cell or make one
+	
+	function configureControl($unit) {
+		return $unit.is("td, th, h1, h2, h3, h4, h5, h6")? (function() {
+			var $controller = $("<input>").attr("type", "text").addClass("form-control");
+			$unit.append($controller);
+			return $controller;
+		})() : $unit.is("p")? (function() {
+			var $controller = $("<textarea>").attr("rows", "4").addClass("form-control");
+			$unit.append($controller);
+			return $controller;
+		})() : $unit;
+	}
+	
+	function configure($element) {
+		// Assure fields for tables
+		if ($root.is("table")) $root.find("thead>tr>th").each(function(i, field) {
+			var child = $element.children()[i];			
+			var $cell = $(child || "<td>"); // Get template cell or make one
 			if (!$cell.attr("data-field")) $cell.attr("data-field", $(field).text());
-			if (!$(element).children()[i]) $(element).append($cell);
+			if (!child) $element.append($cell);
 		});
 		
-		return element;
+		// Setup controls if required
+		if ($root.attr("data-control") != null) $element.find("[data-field]").each(function(i, unit) {
+			var $controller = configureControl($(unit));
+			if ($controller[0] !== unit) {
+				$controller.attr("data-field", $(unit).attr("data-field"));
+				$(unit).removeAttr("data-field");
+			}
+		});
+		
+		return $element;
 	}
 	
 	function update() {
 		$.getJSON($root.attr("data-url"), function(contents) {
 			
 			$.each(contents, function(i, content) {
-				var $element = $(configure($container.children()[i+1] || $($elementTemplate.html())));
-				
+				var $element = $($container.children()[i+1] || configure($($elementTemplate.html())));				
 				$element.find("[data-field]").each(function(j, unit) {
 					var field = $(unit).attr("data-field");
 					var value = content[field] || "[N/A]";
-					if (!processor || processor(field, value, content, $(unit), $element)) {
-						$(unit).text(value);
+					if (!setter || setter(field, value, content, $(unit), $element)) {
+						if ($(unit).is("input")) $(unit).attr("placeholder", value);
+						else $(unit).text(value);
 					}
 				});
 				if (!$element.parent().length) $container.append($element);
@@ -72,7 +96,7 @@ $(function() {
 	$("table.dynamic-schedule").dynamize(1, function(field, value, content, $unit, $element) {
 		if (field != "Date") return true;
 		
-		$unit.text(content["Time"]);
+		$unit.attr("placeholder", content["Time"]);
 		return false;
 	});
 	
