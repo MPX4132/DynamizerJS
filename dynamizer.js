@@ -50,26 +50,29 @@ jQuery.fn.dynamize = function() {
 		});
 	}
 	
-	function $ContainerItemAddEditor($containerItem) {
-		var $button = $("<button>").attr("type", "button").addClass("btn btn-info btn-block").click(function() {
+	function $ContainerItemAddControls($containerItem) {
+		var $controlsRoot = $("<div>").addClass("form-group");
+		var $controlsBody = $("<div>").addClass("btn-group btn-group-justified").appendTo($controlsRoot);
+		var $controlEdit = $("<button>").attr("type", "button").addClass("btn").click(function() {
 			console.log("Edit!");
 		});
-		//$button.html("<span class='glyphicon glyphicon-edit'><span>");
-		$button.text("Edit");
-		$containerItem.append($containerItem.is("tr")? $("<td>").append($button) : $button);
+		var $controlDelete = $controlEdit.clone(true);
+		$controlEdit.addClass("btn-default").text("Edit").appendTo($("<div>").addClass("btn-group").appendTo($controlsBody));
+		$controlDelete.addClass("btn-danger").text("Delete").appendTo($("<div>").addClass("btn-group").appendTo($controlsBody));
+		$containerItem.append($containerItem.is("tr")? $("<td>").append($controlsRoot) : $controlsRoot);
 	}
 
 	function $ContainerItemConfigure($containerItem) {
 		// Assure fields for tables
 		if ($containerRoot.is("table")) $containerRoot.find("thead>tr>th").each(function(i, field) {
-			var child = $containerItem.children()[i];			
+			var child = $containerItem.children()[i];
 			var $cell = $(child || "<td>"); // Get template cell or make one
 			if (!$cell.attr("data-field")) $cell.attr("data-field", $(field).text());
 			if (!child) $containerItem.append($cell);
 		});
 		
 		// Setup controls if required
-		if (DataControl) $ContainerItemAddEditor($containerItem);
+		if (DataControl) $ContainerItemAddControls($containerItem);
 		
 		return $containerItem;
 	}
@@ -78,18 +81,28 @@ jQuery.fn.dynamize = function() {
 	
 	// Populate the fields data array, if needed.
 	if (DataControl) (function() {
-		var $controllerRoot = $("<table>").addClass("table");
-		var $controllerHead = $("<thead>").append("<tr><th>Field</th><th>Value</th></tr>").appendTo($controllerRoot)
-		var $controllerBody = $("<tbody>").appendTo($controllerRoot);
+		var $button = $("<button>").addClass("btn").attr("type", "button").click(function() {
+		});
+		var $controllerRoot = $("<div>").addClass("panel panel-warning").insertAfter($containerRoot);
+		var $controllerHead = $("<div>").addClass("panel-heading").text("Configuration").appendTo($controllerRoot);
+		var $controllerBody = $("<div>").addClass("panel-body").appendTo($controllerRoot);
 		$MakeContainerItem().find("[data-field]").each(function(i, unit) {
 			var fieldID = $(unit).attr("data-field");
-			var $fieldRow = $("<tr>");
-			var $fieldCell = $("<th>").attr("scope", "row").text(fieldID).appendTo($fieldRow);
-			var $valueCell = $("<td>").appendTo($fieldRow);
-			var $input = $("<input>").addClass("form-control").attr("type", "text").attr("data-field", fieldID).appendTo($valueCell);
-			$controllerBody.append($fieldRow);
+			var $fieldGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
+			var $fieldGroupBody = $("<div>").addClass("input-group").appendTo($fieldGroupRoot);
+			var $fieldLabel = $("<span>").addClass("input-group-addon").text(fieldID).appendTo($fieldGroupBody);
+			var $fieldInput = $("<input>").addClass("form-control").attr("type", "text").attr("data-field", fieldID).appendTo($fieldGroupBody);
 		});
-		$controllerRoot.insertAfter($containerRoot);
+		var $modifyGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
+		var $modifyGroupBody = $("<div>").addClass("btn-group btn-group-justified").appendTo($modifyGroupRoot);
+		var $modifyGroupAdd = $button.clone(true).text("Add").addClass("btn-primary").appendTo($("<div>").addClass("btn-group").appendTo($modifyGroupBody));
+		var $modifyGroupUpdate = $button.clone(true).text("Update").addClass("btn-info").appendTo($("<div>").addClass("btn-group").appendTo($modifyGroupBody));;
+		$controllerBody.append("<hr>");
+		var $configGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
+		var $configGroupBody = $("<div>").addClass("input-group").appendTo($configGroupRoot);
+		var $configVisible = $("<span>").addClass("input-group-addon").text("Items Visible").appendTo($configGroupBody);
+		var $configVisibleInput = $("<input>").addClass("form-control").attr("type", "text").appendTo($configGroupBody);
+		var $configVisibleUpdate =$button.clone(true).text("Set").addClass("btn-success").appendTo($("<div>").addClass("input-group-btn").appendTo($configGroupBody));
 	})();
 	
 	RequestUpdatedData(); // Launch it once, and schedule it.
