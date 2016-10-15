@@ -24,7 +24,7 @@ jQuery.fn.dynamize = function() {
 	var $containerRoot = $(this);
 	var $containerBody = $($containerRoot.find("[data-body]")[0] || $containerRoot.find("tbody")[0] || this);
 	var $containerItemTemplate = $containerBody.find("template");
-	var DataControl = $containerRoot.attr("data-control") != null;
+	var DataControl = $containerRoot.attr("data-control");
 	
 	if ($containerRoot.data("updaterID")) clearInterval($containerRoot.data("updaterID"));
 	if (arguments[0] == false || !$containerRoot.attr("data-url") || !$containerItemTemplate) return;
@@ -81,6 +81,25 @@ jQuery.fn.dynamize = function() {
 	
 	// Populate the fields data array, if needed.
 	if (DataControl) (function() {
+		var $controller = $($("#" + DataControl).html()).insertAfter("#" + DataControl);
+		var $controllerBody = $controller.find("[data-control-body]");
+		var $controllerFieldTemplate = $controllerBody.find("template");
+		
+		$MakeContainerItem().find("[data-field]").each(function(i, unit) {
+			$($controllerFieldTemplate.html()).appendTo($controllerBody).find("[data-field-id]").text($(unit).attr("data-field"));
+		});
+		
+		$controller.find("[data-field-add]").click(function() {
+			console.log("Add here!");
+		});
+		$controller.find("[data-field-update]").click(function() {
+			console.log("Edit field here!");
+		});
+		$controller.find("[data-config-count-update]").click(function() {
+			console.log("Update count here!");
+		});
+		
+/*
 		var $button = $("<button>").addClass("btn").attr("type", "button").click(function() {
 		});
 		var $controllerRoot = $("<div>").addClass("panel panel-warning").insertAfter($containerRoot);
@@ -103,6 +122,7 @@ jQuery.fn.dynamize = function() {
 		var $configVisible = $("<span>").addClass("input-group-addon").text("Items Visible").appendTo($configGroupBody);
 		var $configVisibleInput = $("<input>").addClass("form-control").attr("type", "text").appendTo($configGroupBody);
 		var $configVisibleUpdate =$button.clone(true).text("Set").addClass("btn-success").appendTo($("<div>").addClass("input-group-btn").appendTo($configGroupBody));
+*/
 	})();
 	
 	RequestUpdatedData(); // Launch it once, and schedule it.

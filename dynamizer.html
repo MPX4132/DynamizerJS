@@ -23,65 +23,104 @@
 		
 	</head>
 	<body>
-		<!-- Dynamic Table -->
-		<table class="dynamic-schedule table table-responsive table-striped" data-url="dynamizer.php?r=schedule" data-control="schedule-control">
-			<thead>
-				<tr><th>Program</th><th>Time</th><th>Date</th></tr>
-			</thead>
-			<tbody>
-				<template>
-					<tr><th scope="row"></th><td></td></tr><!--<td></td></tr> <!-- Removed third cell to test cell auto-insertion -->
-				</template>
-			</tbody>
-		</table>
-		<template id="schedule-control">
-			<div class="panel panel-warning">
-				<div class="panel-heading">Configuration</div>
-				<div class="panel-body">
-					<div data-control-editor>
-						<template>
-							<div class="form-group">
-								<div class="input-group">
-									<span class="input-group-addon" data-field-id></span>
-									<input class="form-control" type="text" data-field-value>
+		<div class="container">
+			<!-- Dynamic Table -->
+			<table class="dynamic-schedule table table-responsive table-striped" data-url="dynamizer.php?r=schedule" data-control="schedule-control">
+				<thead>
+					<tr><th>Program</th><th>Time</th><th>Date</th></tr>
+				</thead>
+				<tbody>
+					<template>
+						<tr><th scope="row"></th><td></td></tr><!--<td></td></tr> <!-- Removed third cell to test cell auto-insertion -->
+					</template>
+				</tbody>
+			</table>
+			<template id="schedule-control">
+				<div class="panel panel-warning">
+					<div class="panel-heading">Schedule Manager</div>
+					<div class="panel-body">
+						<div data-control-body>
+							<template>
+								<div class="form-group">
+									<div class="input-group">
+										<span class="input-group-addon" data-field-id></span>
+										<input class="form-control" type="text" data-field-value>
+									</div>
+								</div>
+							</template>
+						</div>
+						<div class="form-group">
+							<div class="btn-group btn-group-justified">
+								<div class="btn-group">
+									<button class="btn btn-primary" type="button" data-field-add>Add</button>
+								</div>
+								<div class="btn-group">
+									<button class="btn btn-info" type="button" data-field-update>Update</button>
 								</div>
 							</div>
-						</template>
-					</div>
-					<div class="form-group">
-						<div class="btn-group btn-group-justified">
-							<div class="btn-group">
-								<button class="btn btn-primary" type="button" data-field-add>Add</button>
-							</div>
-							<div class="btn-group">
-								<button class="btn btn-info" type="button" data-field-update>Update</button>
-							</div>
 						</div>
-					</div>
-					<hr>
-					<div class="form-group">
-						<div class="input-group">
-							<span class="input-group-addon">Items Visible</span>
-							<input class="form-control" type="text" data-field-count>
-							<div class="input-group-btn">
-								<button class="btn btn-success" type="button" data-field-count-update>Set</button>
+						<hr>
+						<div class="form-group">
+							<div class="input-group">
+								<span class="input-group-addon">Items Visible</span>
+								<input class="form-control" type="text" data-config-count>
+								<div class="input-group-btn">
+									<button class="btn btn-success" type="button" data-config-count-update>Set</button>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+			</template>
+			<!-- Dynamic Generic Element -->
+			<div class="dynamic-gallery container-fluid" data-url="dynamizer.php?r=gallery" data-control="gallery-control">
+				<div class="row" data-body>
+					<template>
+	 					<div class="col-xs-6 col-sm-3">
+							<h3 data-field="title"></h3>
+							<img data-field="image">
+							<p data-field="comment"></p>
+						</div>
+					</template>
+				</div>
 			</div>
-		</template>
-		<!-- Dynamic Generic Element -->
-		<div class="dynamic-gallery container-fluid" data-url="dynamizer.php?r=gallery" data-control>
-			<div class="row" data-body>
-				<template>
- 					<div class="col-xs-6 col-sm-3">
-						<h3 data-field="title"></h3>
-						<img data-field="image">
-						<p data-field="comment"></p>
+			<template id="gallery-control">
+				<div class="panel panel-warning">
+					<div class="panel-heading">Gallery Manager</div>
+					<div class="panel-body">
+						<div data-control-body>
+							<template>
+								<div class="form-group">
+									<div class="input-group">
+										<span class="input-group-addon" data-field-id></span>
+										<input class="form-control" type="text" data-field-value>
+									</div>
+								</div>
+							</template>
+						</div>
+						<div class="form-group">
+							<div class="btn-group btn-group-justified">
+								<div class="btn-group">
+									<button class="btn btn-primary" type="button" data-field-add>Add</button>
+								</div>
+								<div class="btn-group">
+									<button class="btn btn-info" type="button" data-field-update>Update</button>
+								</div>
+							</div>
+						</div>
+						<hr>
+						<div class="form-group">
+							<div class="input-group">
+								<span class="input-group-addon">Items Visible</span>
+								<input class="form-control" type="text" data-config-count>
+								<div class="input-group-btn">
+									<button class="btn btn-success" type="button" data-config-count-update>Set</button>
+								</div>
+							</div>
+						</div>
 					</div>
-				</template>
-			</div>
+				</div>
+			</template>
 		</div>
 	</body>
 </html>
