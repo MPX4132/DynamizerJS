@@ -2,15 +2,15 @@
 dynamize([ interval [, setter ]]) : return
 	- interval: A number denoting the time (in seconds) between updates
 	- setter: A function called when setting a cell's value
-		> setter([ field [, value [, content [, $unit [, $element ]]]]]) : Accepts or rejects 'value'
+		> setter([ field [, value [, content [, $unit [, $containerItem ]]]]]) : Accepts or rejects 'value'
 			- field: A string denoting the label of a $unit.
-				> These are assignable labels which are used to target specific $units of an $element.
+				> These are assignable labels which are used to target specific $units of an $containerItem.
 			- value: The default value to be assigned if the function (setter) returns true.
-			- content: Updated JSON data for the $element passed, retrived from the server.
+			- content: Updated JSON data for the $containerItem passed, retrived from the server.
 			- $unit: jQuery object representing a specific part of the element being modified.
 				> These are identified by assigning the data-field tag, which can be anything.
 				> The value should match the key from a key-value pair of content (JSON from server).
-			- $element: jQuery object parent of the $unit elements which are updated.
+			- $containerItem: jQuery object parent of the $unit elements which are updated.
 
 			
 dynamize([ stop ])
@@ -24,22 +24,40 @@ jQuery.fn.dynamize = function() {
 	var $containerRoot = $(this);
 	var $containerBody = $($containerRoot.find("[data-body]")[0] || $containerRoot.find("tbody")[0] || this);
 	var $containerItemTemplate = $containerBody.find("template");
+	
 	var DataControl = $containerRoot.attr("data-control");
 	
 	if ($containerRoot.data("updaterID")) clearInterval($containerRoot.data("updaterID"));
 	if (arguments[0] == false || !$containerRoot.attr("data-url") || !$containerItemTemplate) return;
 	
+	function PostFormData(formData) {
+		return $.post({
+			url: $containerRoot.attr("data-url"),
+			data: formData,
+			// cache: false, // Cache response? For JSON default is false
+			processData: false,
+            contentType: false,
+			complete: function(event) {RequestUpdatedData();}
+		});
+	}
+	
 	function RequestUpdatedData() {
 		return $.getJSON($containerRoot.attr("data-url"), function(contents) {
 			
 			$.each(contents, function(i, content) {
-				var $element = $($containerBody.children()[i+1] || $MakeContainerItem());				
-				$element.find("[data-field]").each(function(j, unit) {
+				var $containerItem = $($containerBody.children()[i+1] || $MakeContainerItem());
+				
+				var $fieldEditButton = $containerItem.find("[data-field-edit]");
+				var $fieldRemoveButton = $containerItem.find("[data-field-delete]");
+				$fieldEditButton.data("container", $containerItem).data("content", content).removeClass("disabled");
+				$fieldRemoveButton.data("container", $containerItem).data("content", content).removeClass("disabled");
+				
+				$containerItem.find("[data-field]").each(function(j, unit) {
 					var field = $(unit).attr("data-field");
 					var value = content[field] || "[N/A]";
-					if (!setter || setter(field, value, content, $(unit), $element)) $(unit).text(value);
+					if (!setter || setter(field, value, content, $(unit), $containerItem)) $(unit).text(value);
 				});
-				if (!$element.parent().length) $containerBody.append($element);
+				if (!$containerItem.parent().length) $containerBody.append($containerItem);
 			});
 			
 			$containerBody.children(":gt(" + contents.length + ")").remove();
@@ -51,15 +69,33 @@ jQuery.fn.dynamize = function() {
 	}
 	
 	function $ContainerItemAddControls($containerItem) {
-		var $controlsRoot = $("<div>").addClass("form-group");
-		var $controlsBody = $("<div>").addClass("btn-group btn-group-justified").appendTo($controlsRoot);
-		var $controlEdit = $("<button>").attr("type", "button").addClass("btn").click(function() {
-			console.log("Edit!");
+		var $controlsTemplate = $containerItem.find("template");
+		if (!$controlsTemplate.length) return;
+		
+		var $controls = $($controlsTemplate.html()).insertBefore($controlsTemplate);
+		
+		$controls.find("[data-field-edit]").click(function(event) {
+			if (!(unitID = $(this).data("content")["id"]) || !$containerRoot.data("controller-body")) return;
+			
+			$containerRoot.data("controller-body").find("[data-field-value]").each(function(i, input) {
+				$(input).val($(event.target).data("content")[$(input).attr("data-field-value")]);
+			})
+			
+			$containerRoot.data("controller-body").data("unitID", unitID);
+			
+			$containerRoot.data("controller").find("[data-field-update]").removeClass("disabled");
 		});
-		var $controlDelete = $controlEdit.clone(true);
-		$controlEdit.addClass("btn-default").text("Edit").appendTo($("<div>").addClass("btn-group").appendTo($controlsBody));
-		$controlDelete.addClass("btn-danger").text("Delete").appendTo($("<div>").addClass("btn-group").appendTo($controlsBody));
-		$containerItem.append($containerItem.is("tr")? $("<td>").append($controlsRoot) : $controlsRoot);
+		
+		$controls.find("[data-field-delete]").click(function(event) {
+			if (!(unitID = $(this).data("content")["id"])) return;
+			
+			$(this).addClass("disabled");
+			
+			var formData = new FormData();
+			formData.append("operation", "delete");
+			formData.append("id", unitID);
+			PostFormData(formData);
+		});
 	}
 
 	function $ContainerItemConfigure($containerItem) {
@@ -85,44 +121,72 @@ jQuery.fn.dynamize = function() {
 		var $controllerBody = $controller.find("[data-control-body]");
 		var $controllerFieldTemplate = $controllerBody.find("template");
 		
-		$MakeContainerItem().find("[data-field]").each(function(i, unit) {
-			$($controllerFieldTemplate.html()).appendTo($controllerBody).find("[data-field-id]").text($(unit).attr("data-field"));
-		});
+		$controllerBody.data("fields", {});
 		
-		$controller.find("[data-field-add]").click(function() {
-			console.log("Add here!");
-		});
-		$controller.find("[data-field-update]").click(function() {
-			console.log("Edit field here!");
-		});
-		$controller.find("[data-config-count-update]").click(function() {
-			console.log("Update count here!");
-		});
-		
-/*
-		var $button = $("<button>").addClass("btn").attr("type", "button").click(function() {
-		});
-		var $controllerRoot = $("<div>").addClass("panel panel-warning").insertAfter($containerRoot);
-		var $controllerHead = $("<div>").addClass("panel-heading").text("Configuration").appendTo($controllerRoot);
-		var $controllerBody = $("<div>").addClass("panel-body").appendTo($controllerRoot);
 		$MakeContainerItem().find("[data-field]").each(function(i, unit) {
+			var $controllerField = $($controllerFieldTemplate.html()).appendTo($controllerBody);
 			var fieldID = $(unit).attr("data-field");
-			var $fieldGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
-			var $fieldGroupBody = $("<div>").addClass("input-group").appendTo($fieldGroupRoot);
-			var $fieldLabel = $("<span>").addClass("input-group-addon").text(fieldID).appendTo($fieldGroupBody);
-			var $fieldInput = $("<input>").addClass("form-control").attr("type", "text").attr("data-field", fieldID).appendTo($fieldGroupBody);
+			var $fieldLabel = $controllerField.find("[data-field-id]").text(fieldID);
+			var $fieldInput = $controllerField.find("[data-field-value]").attr("data-field-value", fieldID);
 		});
-		var $modifyGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
-		var $modifyGroupBody = $("<div>").addClass("btn-group btn-group-justified").appendTo($modifyGroupRoot);
-		var $modifyGroupAdd = $button.clone(true).text("Add").addClass("btn-primary").appendTo($("<div>").addClass("btn-group").appendTo($modifyGroupBody));
-		var $modifyGroupUpdate = $button.clone(true).text("Update").addClass("btn-info").appendTo($("<div>").addClass("btn-group").appendTo($modifyGroupBody));;
-		$controllerBody.append("<hr>");
-		var $configGroupRoot = $("<div>").addClass("form-group").appendTo($controllerBody);
-		var $configGroupBody = $("<div>").addClass("input-group").appendTo($configGroupRoot);
-		var $configVisible = $("<span>").addClass("input-group-addon").text("Items Visible").appendTo($configGroupBody);
-		var $configVisibleInput = $("<input>").addClass("form-control").attr("type", "text").appendTo($configGroupBody);
-		var $configVisibleUpdate =$button.clone(true).text("Set").addClass("btn-success").appendTo($("<div>").addClass("input-group-btn").appendTo($configGroupBody));
-*/
+		
+		$controller.find("[data-field-add],[data-field-update]").click(function() {
+			var updating = $(this).attr("data-field-update") != null;
+			if (updating && !$controllerBody.data("unitID")) return;
+			
+			var data = new Object();
+			var formData = new FormData();
+
+			formData.append("operation", updating? "update" : "create");
+			if (updating) formData.append("id", $controllerBody.data("unitID"));
+			
+			$controllerBody.find("[data-field-value]").each(function(i, field) {
+				var value = $(field).val();
+				if (value) $(field).parent().removeClass("has-warning").addClass("has-success");
+				else $(field).parent().removeClass("has-success").addClass("has-warning");
+				if (!(data = value? data : null)) return;
+				console.log("Set: " + $(field).attr("data-field-value") + " " + $(field).val());
+				data[$(field).attr("data-field-value")] = $(field).val();
+			});
+			
+			if (!data) return;
+			
+			$controllerBody.find("[data-field-value]").each(function(i, field) {
+				$(field).val("").parent().removeClass("has-success");
+			});
+			
+			if (updating) {$controllerBody.data("unitID", null); $(this).addClass("disabled");}
+			
+			formData.append("values", JSON.stringify(data));
+			console.log("Sending values: " + formData);
+			PostFormData(formData);
+			
+		});
+		
+		$controller.find("[data-field-update]").addClass("disabled");
+		
+		var $controllerCounter = $controller.find("[data-config-count-update]").click(function(event) {
+			$controllerCounter.removeClass("btn-success").addClass("btn-default disabled");
+			var formData = new FormData();
+			formData.append("operation", "configuration");
+			formData.append("visible", $(this).data("count"));
+			console.log("Sending config: " + formData);
+			PostFormData(formData);
+		});
+		
+		$controllerCounter.data("count", 0).addClass("disabled");
+		
+		$controller.find("[data-config-count-less],[data-config-count-more]").click(function(event) {
+			var change = $(this).attr("data-config-count-more") != null? 1 : -1;
+			var count = $controllerCounter.data("count") + change;
+			if (count < 0) count = 0;
+			$controllerCounter.data("count", count);
+			$controllerCounter.text("Show " + count);
+			$controllerCounter.removeClass("disabled").addClass("btn-success");
+		});
+		
+		$containerRoot.data("controller", $controller);
+		$containerRoot.data("controller-body", $controllerBody);
 	})();
 	
 	RequestUpdatedData(); // Launch it once, and schedule it.
@@ -132,14 +196,14 @@ jQuery.fn.dynamize = function() {
 }
 
 $(function() {
-	$("table.dynamic-schedule").dynamize(1, function(field, value, content, $unit, $element) {
+	$("table.dynamic-schedule").dynamize(0.10, function(field, value, content, $unit, $containerItem) {
 		if (field != "Date") return true;
 		
 		$unit.text(content["Time"]);
 		return false;
 	});
 	
-	$("div.dynamic-gallery").dynamize(5, function(field, value, content, $unit, $element) {
+	$("div.dynamic-gallery").dynamize(5, function(field, value, content, $unit, $containerItem) {
 		if (field != "image") return true;
 		
 		$unit.attr("src", content["url"]);
