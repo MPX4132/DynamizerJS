@@ -72,7 +72,7 @@ jQuery.fn.dynamize = function() {
 		var $controlsTemplate = $containerItem.find("template");
 		if (!$controlsTemplate.length) return;
 		
-		var $controls = $($controlsTemplate.html()).insertBefore($controlsTemplate);
+		var $controls = $($controlsTemplate.html()).insertAfter($controlsTemplate);
 		
 		$controls.find("[data-field-edit]").click(function(event) {
 			if (!(unitID = $(this).data("content")["id"]) || !$containerRoot.data("controller-body")) return;
@@ -101,10 +101,11 @@ jQuery.fn.dynamize = function() {
 	function $ContainerItemConfigure($containerItem) {
 		// Assure fields for tables
 		if ($containerRoot.is("table")) $containerRoot.find("thead>tr>th").each(function(i, field) {
-			var child = $containerItem.children()[i];
+			var sibling = $($containerItem.children()[i-1]).is("th,td")? $containerItem.children()[i-1] : false;
+			var child = $($containerItem.children()[i]).is("th,td")? $containerItem.children()[i] : false;
 			var $cell = $(child || "<td>"); // Get template cell or make one
 			if (!$cell.attr("data-field")) $cell.attr("data-field", $(field).text());
-			if (!child) $containerItem.append($cell);
+			if (!child) sibling? $cell.insertAfter(sibling) : $containerItem.prepend($cell);
 		});
 		
 		// Setup controls if required
@@ -196,7 +197,7 @@ jQuery.fn.dynamize = function() {
 }
 
 $(function() {
-	$("table.dynamic-schedule").dynamize(0.10, function(field, value, content, $unit, $containerItem) {
+	$("table.dynamic-schedule").dynamize(1, function(field, value, content, $unit, $containerItem) {
 		if (field != "Date") return true;
 		
 		$unit.text(content["Time"]);
