@@ -54,7 +54,7 @@ jQuery.fn.dynamize = function() {
 				
 				$containerItem.find("[data-field]").each(function(j, unit) {
 					var field = $(unit).attr("data-field");
-					var value = content[field] || "[N/A]";
+					var value = content[field] || content[field.toLowerCase()] || "[N/A]";
 					if (!setter || setter(field, value, content, $(unit), $containerItem)) $(unit).text(value);
 				});
 				if (!$containerItem.parent().length) $containerBody.append($containerItem);
